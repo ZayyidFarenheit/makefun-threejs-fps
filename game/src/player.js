@@ -9,8 +9,8 @@ import { WeaponState, aimDirection, eyePosition } from './weapons.js';
 const WALK_SPEED = 5.4;
 const CROUCH_SPEED = 2.6;
 const AIR_CONTROL = 0.35;
-const ACCEL = 42;
-const FRICTION = 11;
+const ACCEL = 36;
+const FRICTION = 6;
 const JUMP_VELOCITY = 5.2;
 const GRAVITY = 14;
 

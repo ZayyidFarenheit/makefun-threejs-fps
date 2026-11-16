@@ -14,19 +14,19 @@ export const TEAMS = {
 export const WEAPONS = {
   pistol: {
     id: 'pistol', slot: 1, name: 'P9 Sidearm', price: 0, auto: false,
-    damage: 26, headMult: 2.0, fireInterval: 0.16, reloadTime: 1.1,
+    damage: 30, headMult: 2.0, fireInterval: 0.16, reloadTime: 1.1,
     magSize: 12, reserveMax: 48, spread: 0.006, moveSpread: 0.030,
     recoil: 0.010, range: 60, tracer: 0xffe14d, sound: 'pistol',
   },
   smg: {
     id: 'smg', slot: 2, name: 'Dune-9 SMG', price: 1500, auto: true,
-    damage: 22, headMult: 2.0, fireInterval: 0.085, reloadTime: 1.5,
+    damage: 25, headMult: 2.0, fireInterval: 0.085, reloadTime: 1.5,
     magSize: 32, reserveMax: 96, spread: 0.011, moveSpread: 0.034,
     recoil: 0.008, range: 55, tracer: 0xffc46b, sound: 'smg',
   },
   rifle: {
     id: 'rifle', slot: 3, name: 'VK-47 Carbine', price: 2700, auto: true,
-    damage: 34, headMult: 2.0, fireInterval: 0.11, reloadTime: 1.9,
+    damage: 40, headMult: 2.0, fireInterval: 0.11, reloadTime: 1.9,
     magSize: 30, reserveMax: 90, spread: 0.007, moveSpread: 0.032,
     recoil: 0.014, range: 70, tracer: 0xffd166, sound: 'rifle',
   },

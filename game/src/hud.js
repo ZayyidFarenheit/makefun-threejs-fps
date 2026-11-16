@@ -15,7 +15,8 @@ export class Hud {
       'crosshair', 'start-screen', 'pause-screen', 'death-screen', 'end-screen',
       'buy-menu', 'buy-items', 'buy-note', 'buy-money', 'spectate-label',
       'plant-bar', 'plant-fill', 'plant-label', 'end-title', 'end-sub',
-      'flash-overlay', 'lock-hint', 'round-skip'];
+      'flash-overlay', 'lock-hint', 'round-skip', 'damage-vignette',
+      'reload-indicator'];
     for (const id of ids) this.el[id] = doc.getElementById(id);
     this.lastMoney = -1;
     this.buyOpen = false;
@@ -109,6 +110,17 @@ export class Hud {
     setTimeout(() => { o.style.opacity = '0'; }, 900);
   }
 
+  // Red vignette flash when the player takes a hit — impossible to miss.
+  damageFlash() {
+    const o = this.el['damage-vignette'];
+    o.style.transition = 'none';
+    o.style.opacity = '1';
+    requestAnimationFrame(() => {
+      o.style.transition = 'opacity 350ms linear';
+      o.style.opacity = '0';
+    });
+  }
+
   hitmarker(head) {
     const h = this.el['hitmarker'];
     h.classList.add('on');
@@ -160,6 +172,7 @@ export class Hud {
   update(g, player) {
     const hp = Math.max(0, Math.ceil(player.hp));
     this.el['health-num'].textContent = String(hp);
+    this.el['health-num'].style.color = hp > 50 ? '#7ddb6a' : hp > 25 ? '#ffb347' : '#ff5a4d';
     this.el['health-bar'].style.width = `${hp}%`;
     this.el['health-bar'].style.background = hp > 50 ? '#7ddb6a' : hp > 25 ? '#ffb347' : '#ff5a4d';
     this.el['armor-num'].textContent = player.armor > 0 ? `Kevlar ${Math.ceil(player.armor)}` : '';
@@ -168,6 +181,9 @@ export class Hud {
     this.el['ammo-reserve'].textContent = `/ ${w.reserve}`;
     this.el['ammo-mag'].parentElement.classList.toggle('empty', w.mag === 0);
     this.el['weapon-name'].textContent = w.name + (w.reloading ? ' — RELOADING' : '');
+    // big reload indicator, impossible to miss
+    this.el['reload-indicator'].hidden = !w.reloading;
+    if (w.reloading) this.el['reload-indicator'].textContent = `RELOADING… ${w.name.toUpperCase()}`;
     this.el['timer'].textContent = g.phase === 'buy'
       ? `BUY ${Math.ceil(g.phaseTime)}s`
       : g.bomb.state === 'planted'

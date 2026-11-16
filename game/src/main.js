@@ -120,9 +120,22 @@ const lastGoodCam = { x: 0, y: 2, z: 20 };
 function updateSpectateCamera(target, dt) {
   const eyeY = target.pos.y + MAP.eyeHeight;
   const fx = -Math.sin(target.yaw), fz = -Math.cos(target.yaw);
-  const aimX = target.pos.x + fx * 8;
-  const aimY = eyeY + Math.sin(target.pitch) * 8;
-  const aimZ = target.pos.z + fz * 8;
+  const fy = Math.sin(target.pitch);
+  // Clamp the aim point to just before the first wall the target faces, so
+  // the camera never falls back to the eye position (which hides the target
+  // and shows a blank wall) when the target faces a nearby wall. The aim
+  // must stay strictly on this side of the wall: 85% of the hit distance,
+  // and halfway when the wall is so close even that overshoots it.
+  let aimDist = 8;
+  const hit = world.rayHit(target.pos.x, eyeY, target.pos.z, fx, fy, fz, 8);
+  if (hit) {
+    aimDist = Math.min(8, hit.dist * 0.85);
+    aimDist = Math.max(0.15, aimDist);
+    if (aimDist >= hit.dist) aimDist = hit.dist * 0.5;
+  }
+  const aimX = target.pos.x + fx * aimDist;
+  const aimY = eyeY + fy * aimDist;
+  const aimZ = target.pos.z + fz * aimDist;
   const dists = [2.2, 1.5, 0.8, 0.3];
   let placed = false;
   for (const d of dists) {

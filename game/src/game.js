@@ -45,6 +45,7 @@ export class Game {
     this.beepTimer = 0;
     this.lastKiller = null;
     this._flashUntil = 0;
+    this._lastHurtAt = 0; // throttle the player-hurt sound/flash
     this._buildAgents();
   }
 
@@ -255,6 +256,15 @@ export class Game {
         if (shooter.isPlayer) {
           this.hud.hitmarker(hit.isHead);
           this.sfx.hit(hit.isHead);
+          // enemy flashes red when hit, so every landed shot reads
+          if (hit.agent.model) hit.agent.model.flashHit();
+        }
+        // the player was hit: red vignette + hurt sound, throttled so a
+        // burst does not spam it
+        if (hit.agent.isPlayer && this.simTime - this._lastHurtAt > 0.25) {
+          this._lastHurtAt = this.simTime;
+          this.hud.damageFlash();
+          this.sfx.hurt();
         }
         if (!hit.agent.alive) this.onKill(shooter, hit.agent, hit.isHead ? 'headshot' : 'shot');
       } else if (hit.kind === 'wall') {

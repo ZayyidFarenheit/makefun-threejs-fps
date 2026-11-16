@@ -34,33 +34,51 @@ export class SoldierModel {
     this.group.add(bootL, bootR);
 
     // torso + vest
-    this.torso = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.62, 0.34), cloth);
-    this.torso.position.y = 1.11;
+    this.torso = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.66, 0.34), cloth);
+    this.torso.position.y = 1.13;
     this.group.add(this.torso);
-    const vest = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.42, 0.4), dark);
-    vest.position.y = 1.14;
+    const vest = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.44, 0.4), dark);
+    vest.position.y = 1.16;
     this.group.add(vest);
     // bright team stripe across the chest so the team reads at any distance
     const stripe = new THREE.Mesh(
       new THREE.BoxGeometry(0.58, 0.12, 0.36),
       new THREE.MeshStandardMaterial({ color: team.color, emissive: team.color, emissiveIntensity: 0.55, roughness: 0.6 }),
     );
-    stripe.position.y = 1.26;
+    stripe.position.y = 1.28;
     this.group.add(stripe);
+    // shoulder pads in the team colour — big, bright, read at any distance
+    const padGeo = new THREE.BoxGeometry(0.24, 0.14, 0.3);
+    const padMat = new THREE.MeshStandardMaterial({ color: team.color, emissive: team.color, emissiveIntensity: 0.35, roughness: 0.6 });
+    const padL = new THREE.Mesh(padGeo, padMat);
+    padL.position.set(-0.36, 1.46, 0);
+    const padR = new THREE.Mesh(padGeo, padMat);
+    padR.position.set(0.36, 1.46, 0);
+    this.group.add(padL, padR);
 
     // head: helmet + bright visor
     this.head = new THREE.Group();
-    this.head.position.y = 1.56;
+    this.head.position.y = 1.6;
     const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.21, 14, 10), std(team.color));
     helmet.scale.set(1, 0.9, 1.05);
     this.head.add(helmet);
+    // helmet crest in the team colour, so the head reads from behind too
+    const crest = new THREE.Mesh(
+      new THREE.BoxGeometry(0.1, 0.06, 0.3),
+      new THREE.MeshStandardMaterial({ color: team.color, emissive: team.color, emissiveIntensity: 0.5, roughness: 0.6 }),
+    );
+    crest.position.set(0, 0.19, 0);
+    this.head.add(crest);
     const visor = new THREE.Mesh(
-      new THREE.BoxGeometry(0.3, 0.11, 0.06),
-      new THREE.MeshStandardMaterial({ color: team.visor, emissive: team.visor, emissiveIntensity: 1.6, roughness: 0.2 }),
+      new THREE.BoxGeometry(0.36, 0.13, 0.06),
+      new THREE.MeshStandardMaterial({ color: team.visor, emissive: team.visor, emissiveIntensity: 2.2, roughness: 0.2 }),
     );
     visor.position.set(0, 0.01, 0.19);
     this.head.add(visor);
     this.group.add(this.head);
+    // materials that flash red when this soldier is hit
+    this.flashMats = [this.torso.material, helmet.material];
+    this.flashT = 0;
 
     // arms holding the rifle with both hands
     this.armL = new THREE.Group();
@@ -113,6 +131,13 @@ export class SoldierModel {
   pose(x, z, yaw, moving, dt) {
     this.group.position.set(x, 0, z);
     this.group.rotation.y = yaw;
+    // hit flash: torso + helmet glow red briefly, then fade back
+    if (this.flashT > 0) {
+      this.flashT -= dt;
+      const k = Math.max(0, this.flashT / 0.14);
+      for (const m of this.flashMats) { m.emissive.setHex(0xff2a18); m.emissiveIntensity = k * 1.4; }
+      if (this.flashT <= 0) for (const m of this.flashMats) { m.emissive.setHex(0x000000); m.emissiveIntensity = 1; }
+    }
     if (moving > 0.05) {
       this.walkPhase += dt * 9 * moving;
       const swing = Math.sin(this.walkPhase) * 0.55 * moving;
@@ -124,6 +149,11 @@ export class SoldierModel {
       this.legR.rotation.x *= 0.8;
       this.group.position.y = 0;
     }
+  }
+
+  flashHit() {
+    this.flashT = 0.14;
+    for (const m of this.flashMats) { m.emissive.setHex(0xff2a18); m.emissiveIntensity = 1.4; }
   }
 
   setDead() {
@@ -294,9 +324,9 @@ export class ViewModel {
     // recoil recovery: the kick offsets decay, the base pose never moves
     this.kickZ *= 0.82;
     this.kickRot *= 0.82;
-    const bob = moving > 0.05 ? Math.sin(bobPhase * 2) * 0.008 : 0;
+    const bob = moving > 0.05 ? Math.sin(bobPhase * 2) * 0.014 : 0;
     this.group.position.set(
-      this.basePos.x + (moving > 0.05 ? Math.cos(bobPhase) * 0.004 : 0),
+      this.basePos.x + (moving > 0.05 ? Math.cos(bobPhase) * 0.007 : 0),
       this.basePos.y + bob - this.reloadDipAmount * 0.12,
       this.basePos.z + this.kickZ,
     );

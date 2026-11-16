@@ -48,7 +48,7 @@ export class BotController {
     // resetting to it used to teleport every bot to the middle of the map.)
     this.spawnPos = { x: a.pos.x, z: a.pos.z };
     a.pos.y = 0;
-    a.hp = 100;
+    a.hp = 80;
     a.armor = 0;
     a.alive = true;
     a.crouching = false;
@@ -150,7 +150,7 @@ export class BotController {
       if (this.target !== enemy) {
         this.target = enemy;
         this.reactTimer = rand(REACT_MIN, REACT_MAX);
-        this.aimError = rand(0.02, 0.07);
+        this.aimError = rand(0.015, 0.05);
       }
       this.reactTimer -= dt;
       // face the target with a little error

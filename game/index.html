@@ -50,11 +50,17 @@
   #score-teal { color: var(--accent2); }
 
   /* bottom left: health */
-  #health-box { position: fixed; left: 28px; bottom: 24px; width: 260px; }
-  #health-num { font-family: var(--font-readout); font-size: 44px; line-height: 1; font-weight: 700; }
+  #health-box { position: fixed; left: 28px; bottom: 24px; width: 300px; }
+  #health-label { font-size: 13px; font-weight: 700; letter-spacing: .14em; color: var(--muted); }
+  #health-num { font-family: var(--font-readout); font-size: 58px; line-height: 1; font-weight: 700; text-shadow: 0 2px 10px rgba(0,0,0,.7); }
   #armor-num { font-size: 13px; color: var(--muted); margin-left: 8px; }
-  #health-track { height: 10px; background: rgba(0,0,0,.55); border: 1px solid var(--hairline); border-radius: 5px; margin-top: 6px; overflow: hidden; }
+  #health-track { height: 14px; background: rgba(0,0,0,.55); border: 1px solid var(--hairline); border-radius: 7px; margin-top: 6px; overflow: hidden; }
   #health-bar { height: 100%; width: 100%; background: var(--good); transition: width 150ms linear; }
+
+  /* damage vignette: red flash at the screen edges when the player is hit */
+  #damage-vignette { position: fixed; inset: 0; pointer-events: none; opacity: 0; background: radial-gradient(ellipse at center, transparent 42%, rgba(255, 30, 10, 0.55) 100%); transition: opacity 350ms linear; }
+  /* reload indicator: big, impossible to miss */
+  #reload-indicator { position: fixed; left: 50%; top: 62%; transform: translateX(-50%); font-family: var(--font-readout); font-size: 30px; font-weight: 800; letter-spacing: .12em; color: #ffd28a; text-shadow: 0 2px 12px rgba(0,0,0,.9); }
 
   /* bottom right: ammo + weapon */
   #ammo-box { position: fixed; right: 28px; bottom: 24px; text-align: right; }
@@ -142,9 +148,12 @@
     <span id="score-teal">0</span>
   </div>
   <div id="health-box">
+    <div id="health-label">HEALTH</div>
     <span id="health-num">100</span><span id="armor-num"></span>
     <div id="health-track"><div id="health-bar"></div></div>
   </div>
+  <div id="damage-vignette"></div>
+  <div id="reload-indicator" hidden></div>
   <div id="ammo-box">
     <div id="ammo"><span id="ammo-mag">12</span><span id="ammo-reserve">/ 48</span></div>
     <div id="weapon-name">P9 Sidearm</div>
