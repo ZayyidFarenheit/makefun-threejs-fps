@@ -434,7 +434,12 @@ export class Game {
     const price = kind === 'weapon' ? WEAPONS[id].price
       : kind === 'grenade' ? GRENADES[id].price
       : ECONOMY.kevlarPrice;
-    if (this.money < price) { this.sfx.denied(); return false; }
+    if (this.money < price) {
+      this.sfx.denied();
+      // Say WHY it was refused — a silent deny reads as "the shop is broken".
+      this.hud.setHint(`Not enough money — that costs $${price}, you have $${this.money}`);
+      return false;
+    }
     if (kind === 'weapon' && this.player.ownedWeapons.includes(id)) {
       this.playerCtrl.switchWeapon(id);
       this.sfx.buy();

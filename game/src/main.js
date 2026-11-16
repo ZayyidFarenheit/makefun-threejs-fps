@@ -50,6 +50,7 @@ const input = new Input(renderer.domElement, {
   onAnyKey: () => sfx.ensure(),
 });
 const game = new Game(scene, camera, world, viewmodel, hud, input, sfx);
+game.playerCtrl.viewmodel = viewmodel; // weapon switches swap the 3D gun
 window.__fps = { game, world, hud, input, sfx, THREE, version: 'duskfall-1' };
 
 // ---- UI wiring ------------------------------------------------------------
@@ -78,8 +79,11 @@ document.getElementById('play-again').addEventListener('click', () => {
 });
 document.getElementById('round-skip').addEventListener('click', () => game.skipBuyPhase());
 document.getElementById('death-screen').addEventListener('click', () => game.advanceSpectate());
-// buy menu rows (event delegation; view-only rows do nothing when closed)
-document.getElementById('buy-items').addEventListener('click', (e) => {
+// buy menu rows (event delegation on mousedown, not click: a real mouse
+// press buys immediately — a click can be swallowed when the pointer-lock
+// exit or a re-render lands between down and up, which left the shop dead
+// in a real browser even though synthetic clicks worked)
+document.getElementById('buy-items').addEventListener('mousedown', (e) => {
   const row = e.target.closest('.buy-row');
   if (!row) return;
   if (game.phase !== 'buy') return;
@@ -202,7 +206,12 @@ function updatePlayerCamera() {
   camera.position.set(p.pos.x, eyeY, p.pos.z);
   camera.rotation.y = p.yaw;
   camera.rotation.x = p.pitch;
-  camera.rotation.z = 0;
+  // Strafe lean: a small roll into the strafe direction makes movement feel
+  // fluid instead of stiff — the camera banks with the body.
+  const v = game.playerCtrl.vel;
+  const rightX = Math.cos(p.yaw), rightZ = -Math.sin(p.yaw);
+  const lateral = v.x * rightX + v.z * rightZ;
+  camera.rotation.z = clamp(-lateral * 0.012, -0.03, 0.03);
   if (![camera.position.x, camera.position.y, camera.position.z].every(Number.isFinite)) {
     camera.position.set(lastGoodCam.x, lastGoodCam.y, lastGoodCam.z);
   } else {

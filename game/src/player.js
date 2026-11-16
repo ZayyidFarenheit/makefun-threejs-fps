@@ -6,11 +6,11 @@
 import { WEAPONS, MAP, ECONOMY, MATCH, clamp } from './config.js';
 import { WeaponState, aimDirection, eyePosition } from './weapons.js';
 
-const WALK_SPEED = 5.4;
+const WALK_SPEED = 5.8;
 const CROUCH_SPEED = 2.6;
 const AIR_CONTROL = 0.35;
-const ACCEL = 36;
-const FRICTION = 6;
+const ACCEL = 60;
+const FRICTION = 3.5;
 const JUMP_VELOCITY = 5.2;
 const GRAVITY = 14;
 
@@ -30,6 +30,9 @@ export class PlayerController {
   giveWeapon(weaponId) {
     this.agent.weapon = new WeaponState(weaponId);
     this.agent.weaponId = weaponId;
+    // The 3D gun must visibly change too — a switch that only changes the
+    // HUD reads as "the weapon never changed".
+    if (this.viewmodel) this.viewmodel.setWeapon(weaponId);
   }
 
   switchWeapon(weaponId) {
@@ -117,6 +120,24 @@ export class PlayerController {
     // --- weapons ----------------------------------------------------------
     const w = a.weapon;
     w.update(dt);
+    // Buy menu open: Digit1-8 BUY the listed items (same order as the menu:
+    // smg rifle shotgun sniper frag flash smoke kevlar) instead of switching
+    // weapons, so the shop also works fully from the keyboard.
+    if (game.hud.buyOpen) {
+      const buyOrder = [
+        ['weapon', 'smg'], ['weapon', 'rifle'], ['weapon', 'shotgun'], ['weapon', 'sniper'],
+        ['grenade', 'frag'], ['grenade', 'flash'], ['grenade', 'smoke'], ['kevlar', 'kevlar'],
+      ];
+      for (let i = 0; i < 8; i++) {
+        if (input.pressed('Digit' + (i + 1))) game.buyItem(buyOrder[i][0], buyOrder[i][1]);
+      }
+      if (input.pressed('KeyR')) {
+        if (w.startReload()) this.sfx.reload();
+        else if (w.mag === 0) this.sfx.dryClick();
+      }
+      if (input.pressed('KeyB')) game.toggleBuyMenu(a);
+      return;
+    }
     if (input.pressed('KeyR')) {
       if (w.startReload()) this.sfx.reload();
       else if (w.mag === 0) this.sfx.dryClick();

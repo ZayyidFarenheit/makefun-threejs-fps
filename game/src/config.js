@@ -55,7 +55,7 @@ export const GRENADE_ORDER = ['frag', 'flash', 'smoke'];
 
 // ---- Economy -------------------------------------------------------------
 export const ECONOMY = {
-  startMoney: 800,
+  startMoney: 3000,
   killReward: 300,
   winReward: 3250,
   lossReward: 1900,

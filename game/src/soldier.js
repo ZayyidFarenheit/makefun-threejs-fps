@@ -191,24 +191,13 @@ export class ViewModel {
     const sleeve = std(0x4a3f30);
     const metal = std(0x22242a, { metalness: 0.55, roughness: 0.4 });
 
-    // rifle receiver + barrel, low and right of centre
-    const receiver = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.1, 0.5), metal);
-    receiver.position.set(0.14, -0.17, -0.48);
-    this.group.add(receiver);
-    const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.34, 10), std(0x14161a, { metalness: 0.6 }));
-    barrel.rotation.x = Math.PI / 2;
-    barrel.position.set(0.14, -0.15, -0.85);
-    this.group.add(barrel);
-    const mag = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.16, 0.09), std(0x3a3d44, { metalness: 0.4 }));
-    mag.position.set(0.14, -0.27, -0.38);
-    mag.rotation.x = 0.15;
-    this.group.add(mag);
-    const sight = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.05, 0.1), std(0x111214));
-    sight.position.set(0.14, -0.09, -0.55);
-    this.group.add(sight);
-    const stock = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.09, 0.16), std(0x2e2a26));
-    stock.position.set(0.14, -0.17, -0.2);
-    this.group.add(stock);
+    // The gun itself lives in its own group so setWeapon() can swap it:
+    // a switch that only changes the HUD reads as "the weapon never
+    // changed", so each weapon gets its own barrel, magazine, stock and
+    // furniture. Hands, forearms and muzzle flash stay put.
+    this.gun = null;
+    this.weaponId = 'rifle';
+    this._buildGun('rifle');
 
     // rear hand (right): glove wrapped on the grip, fingers suggested by
     // four small boxes curled around the receiver, thumb along the side.
@@ -294,6 +283,68 @@ export class ViewModel {
     this.group.rotation.y = -0.28; // angled across the view, side profile visible
     camera.add(this.group);
     this.camera = camera;
+  }
+
+  // Per-weapon gun: barrel length/radius, magazine, stock, sight/pump/
+  // scope. The whole gun group is rebuilt on a switch so the change is
+  // unmistakable in first person.
+  _buildGun(id) {
+    const metal = std(0x22242a, { metalness: 0.55, roughness: 0.4 });
+    const dark = std(0x14161a, { metalness: 0.6 });
+    const cfg = {
+      pistol: { recv: 0.28, barrel: 0.14, br: 0.02, mag: [0.05, 0.1, 0.07], stock: 0, sight: 0, scope: 0, pump: 0, accent: 0x8a6d3b },
+      smg: { recv: 0.4, barrel: 0.24, br: 0.02, mag: [0.04, 0.2, 0.06], stock: 0.1, sight: 1, scope: 0, pump: 0, accent: 0x3b5a8a },
+      rifle: { recv: 0.5, barrel: 0.34, br: 0.022, mag: [0.055, 0.16, 0.09], stock: 0.16, sight: 1, scope: 0, pump: 0, accent: 0x8a3b2e },
+      shotgun: { recv: 0.46, barrel: 0.32, br: 0.032, mag: [0.05, 0.1, 0.12], stock: 0.16, sight: 0, scope: 0, pump: 1, accent: 0x5a3b8a },
+      sniper: { recv: 0.52, barrel: 0.55, br: 0.018, mag: [0.045, 0.12, 0.08], stock: 0.18, sight: 0, scope: 1, pump: 0, accent: 0x2e6b4f },
+    }[id] || null;
+    if (!cfg) return;
+    const gun = new THREE.Group();
+    const receiver = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.1, cfg.recv), metal);
+    receiver.position.set(0.14, -0.17, -0.48);
+    gun.add(receiver);
+    const barrel = new THREE.Mesh(new THREE.CylinderGeometry(cfg.br, cfg.br, cfg.barrel, 10), dark);
+    barrel.rotation.x = Math.PI / 2;
+    barrel.position.set(0.14, -0.15, -0.48 - cfg.recv / 2 - cfg.barrel / 2 + 0.05);
+    gun.add(barrel);
+    const mag = new THREE.Mesh(new THREE.BoxGeometry(cfg.mag[0], cfg.mag[1], cfg.mag[2]), std(0x3a3d44, { metalness: 0.4 }));
+    mag.position.set(0.14, -0.27, -0.38);
+    mag.rotation.x = 0.15;
+    gun.add(mag);
+    if (cfg.sight) {
+      const sight = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.05, 0.1), std(0x111214));
+      sight.position.set(0.14, -0.09, -0.55);
+      gun.add(sight);
+    }
+    if (cfg.scope) {
+      const scope = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.16, 10), dark);
+      scope.rotation.x = Math.PI / 2;
+      scope.position.set(0.14, -0.06, -0.5);
+      gun.add(scope);
+    }
+    if (cfg.pump) {
+      const pump = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.05, 0.16), std(0x2e2a26));
+      pump.position.set(0.14, -0.21, -0.68);
+      gun.add(pump);
+    }
+    if (cfg.stock) {
+      const stock = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.09, cfg.stock), std(0x2e2a26));
+      stock.position.set(0.14, -0.17, -0.2);
+      gun.add(stock);
+    }
+    // coloured accent band on the receiver so each weapon reads at a glance
+    const band = new THREE.Mesh(new THREE.BoxGeometry(0.078, 0.02, 0.1), std(cfg.accent, { metalness: 0.3, roughness: 0.5 }));
+    band.position.set(0.14, -0.12, -0.42);
+    gun.add(band);
+    if (this.gun) this.group.remove(this.gun);
+    this.gun = gun;
+    this.weaponId = id;
+    this.group.add(gun);
+  }
+
+  setWeapon(id) {
+    if (id === this.weaponId) return;
+    this._buildGun(id);
   }
 
   kick(amount) {

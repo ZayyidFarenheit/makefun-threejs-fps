@@ -104,7 +104,11 @@
   /* overlays */
   .overlay { position: fixed; inset: 0; display: grid; place-items: center; padding: 24px; background: rgba(20, 12, 6, 0.78); pointer-events: auto; }
   /* the death screen fades in/out instead of popping */
-  #death-screen { transition: opacity 400ms ease; }
+  #death-screen { transition: opacity 400ms ease; background: transparent; place-items: start center; padding-top: 16px; pointer-events: none; }
+  /* Slim top banner, not a full dark overlay: the spectate chase camera
+     must stay fully visible behind it, or dying reads as a black screen. */
+  #death-banner { pointer-events: auto; cursor: pointer; background: rgba(20, 12, 6, 0.88); border: 1px solid var(--hairline); border-radius: 6px; padding: 10px 18px; text-align: center; font-size: 14px; color: var(--muted); }
+  #death-banner strong { color: #ff5a3c; font-size: 15px; letter-spacing: 1px; }
   .panel { width: min(560px, 100%); max-height: 92vh; overflow-y: auto; padding: 30px 34px; background: var(--panel); border: 1px solid var(--hairline); border-radius: 8px; }
   .panel h1 { margin: 0 0 4px; font-size: 40px; line-height: 1.05; font-weight: 800; letter-spacing: -0.01em; }
   .panel h1 .sun { color: var(--accent); }
@@ -228,10 +232,7 @@
 </div>
 
 <div id="death-screen" class="overlay" hidden>
-  <section class="panel" role="dialog" aria-modal="true">
-    <h2>You are down</h2>
-    <p>Spectating a teammate — click anywhere to cycle to the next teammate. The round continues without you.</p>
-  </section>
+  <div id="death-banner"><strong>YOU ARE DOWN</strong> — spectating a teammate · click to cycle · the round continues without you</div>
 </div>
 
 <div id="end-screen" class="overlay" hidden>
