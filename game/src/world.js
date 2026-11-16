@@ -1,4 +1,4 @@
-// Sunset desert relay station: the map. Bright, readable, original layout.
+// Duskfall — desert relay station at dusk: the map. Bright, readable, original layout.
 // Three lanes (west / mid / east), two bomb sites (A north-west, B north-east),
 // attacker spawn south, defender spawn north. All geometry is procedural:
 // no textures, models or network loads — canvas textures are drawn locally.

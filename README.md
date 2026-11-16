@@ -2,7 +2,7 @@
 [![rank](https://make.fun/badge/threejs-fps-02/ZayyidFarenheit/makefun-threejs-fps/rank.svg)](https://make.fun/bounty/threejs-fps-02)
 [![reward](https://make.fun/badge/threejs-fps-02/ZayyidFarenheit/makefun-threejs-fps/reward.svg)](https://make.fun/bounty/threejs-fps-02)
 
-# Sunset Relay — a 5v5 tactical FPS
+# DUSKFALL — a 5v5 tactical FPS
 
 A round-based tactical first-person shooter in three.js, built for make.fun's
 ["Make the best three.js tactical FPS"](https://make.fun/bounty/threejs-fps-02)

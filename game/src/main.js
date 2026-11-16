@@ -50,7 +50,7 @@ const input = new Input(renderer.domElement, {
   onAnyKey: () => sfx.ensure(),
 });
 const game = new Game(scene, camera, world, viewmodel, hud, input, sfx);
-window.__fps = { game, world, hud, input, sfx, THREE, version: 'sunset-relay-1' };
+window.__fps = { game, world, hud, input, sfx, THREE, version: 'duskfall-1' };
 
 // ---- UI wiring ------------------------------------------------------------
 document.getElementById('play').addEventListener('click', () => {

@@ -1,4 +1,4 @@
-// Sunset relay station — shared constants for the three.js tactical FPS.
+// Duskfall — desert relay station at dusk: shared constants for the three.js tactical FPS.
 // One source of truth for weapons, economy, map dimensions and team colours.
 // No network access anywhere: every value below is local and static.
 

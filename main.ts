@@ -1,4 +1,4 @@
-// Sunset Relay — a 5v5 round-based tactical FPS in three.js (Node 22,
+// DUSKFALL — a 5v5 round-based tactical FPS in three.js (Node 22,
 // standard library only). The game is this directory's game/ folder: plain
 // static files the browser loads as ES modules, three.js 0.187.0 from an
 // import map, no build step and no network request. This program hands it
@@ -33,4 +33,4 @@ if (existsSync(join(here, 'screenshots'))) cpSync(join(here, 'screenshots'), joi
 // the order the filesystem happens to list files.
 const dossier = buildDossier(out, { text_max_bytes: 163840, screenshots: { max: 4, max_bytes: 262144 }, game_max_files: 993, game_max_bytes: 50331648 });
 writeFileSync(join(out, 'dossier.json'), dossier);
-console.log(`Sunset Relay handed in: ${dossier.length} dossier bytes in ${out}`);
+console.log(`DUSKFALL handed in: ${dossier.length} dossier bytes in ${out}`);
