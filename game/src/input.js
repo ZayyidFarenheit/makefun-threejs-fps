@@ -49,10 +49,14 @@ export class Input {
     });
     this.canvas.addEventListener('mousedown', (e) => {
       if (e.button !== 0) return;
+      // Clicking the canvas when unlocked and lock is wanted re-locks — that
+      // click is for the lock, not a shot, so it must not fire the weapon.
+      if (!this.locked && !this.lockFailed && this.lockWanted) {
+        this.requestLock();
+        return;
+      }
       this.firing = true;
       if (this.cb.onAnyKey) this.cb.onAnyKey();
-      // Clicking the canvas when unlocked and lock is wanted re-locks.
-      if (!this.locked && !this.lockFailed && this.lockWanted) this.requestLock();
     });
     window.addEventListener('mouseup', (e) => {
       if (e.button === 0) this.firing = false;
@@ -110,6 +114,26 @@ export class Input {
 
   exitLock() {
     if (document.pointerLockElement) document.exitPointerLock();
+  }
+
+  // Soft re-lock attempt after the buy menu closes: never marks the lock as
+  // failed. Chrome enforces a short cooldown after exitPointerLock, so a
+  // too-early attempt must not poison lockFailed — the click-to-relock path
+  // stays available as the fallback.
+  async tryRelock() {
+    if (this.lockFailed || this.locked || !this.lockWanted) return this.locked;
+    try {
+      const p = this.canvas.requestPointerLock();
+      if (p && typeof p.catch === 'function') await p;
+      await new Promise((r) => setTimeout(r, 60));
+      if (document.pointerLockElement === this.canvas) {
+        this.locked = true;
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
   }
 
   // Call after a resume click: suppress pause re-show for ~1 s, re-armed by

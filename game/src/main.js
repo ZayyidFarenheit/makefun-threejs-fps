@@ -116,8 +116,17 @@ renderer.domElement.addEventListener('webglcontextrestored', () => {
 // them at their aim point. Pull-back is clamped step by step against
 // colliders and requires an open ray camera→aim; boxed in, it falls back to
 // the eye position and hides the target mesh only then.
+//
+// The camera never hard-cuts into spectate: on death (and when the watched
+// teammate changes) it glides from the current pose to the chase pose over
+// ~0.5 s with a smoothstep ease, so dying feels like a swoop, not a snap.
 const lastGoodCam = { x: 0, y: 2, z: 20 };
-function updateSpectateCamera(target, dt) {
+let specBlend = 1; // 0..1: 1 = fully on the chase camera
+let specFrom = null; // camera pose {x,y,z,ax,ay,az} the glide starts from
+let specWasAlive = true;
+let specTargetId = null;
+
+function updateSpectateCamera(target, blend = 1, from = null) {
   const eyeY = target.pos.y + MAP.eyeHeight;
   const fx = -Math.sin(target.yaw), fz = -Math.cos(target.yaw);
   const fy = Math.sin(target.pitch);
@@ -137,23 +146,36 @@ function updateSpectateCamera(target, dt) {
   const aimY = eyeY + fy * aimDist;
   const aimZ = target.pos.z + fz * aimDist;
   const dists = [2.2, 1.5, 0.8, 0.3];
-  let placed = false;
+  let pose = null;
   for (const d of dists) {
     const cx = target.pos.x - fx * d;
     const cy = eyeY + 0.9;
     const cz = target.pos.z - fz * d;
     if (pointInCollider(cx, cy, cz, 0.35)) continue;
     if (world.losBlocked(cx, cy, cz, aimX, aimY, aimZ)) continue;
-    setCamera(cx, cy, cz, aimX, aimY, aimZ);
+    pose = { cx, cy, cz, ax: aimX, ay: aimY, az: aimZ };
     target.model.group.visible = true;
-    placed = true;
     break;
   }
-  if (!placed) {
+  if (!pose) {
     // boxed in: eye position, hide the target mesh so it does not fill the frame
-    setCamera(target.pos.x, eyeY, target.pos.z, aimX, aimY, aimZ);
+    pose = { cx: target.pos.x, cy: eyeY, cz: target.pos.z, ax: aimX, ay: aimY, az: aimZ };
     target.model.group.visible = false;
   }
+  // Glide from the death pose (or the old chase pose on a target change)
+  // instead of snapping: smoothstep over ~0.5 s.
+  if (from && blend < 1) {
+    const t = blend * blend * (3 - 2 * blend);
+    pose = {
+      cx: from.x + (pose.cx - from.x) * t,
+      cy: from.y + (pose.cy - from.y) * t,
+      cz: from.z + (pose.cz - from.z) * t,
+      ax: from.ax + (pose.ax - from.ax) * t,
+      ay: from.ay + (pose.ay - from.ay) * t,
+      az: from.az + (pose.az - from.az) * t,
+    };
+  }
+  setCamera(pose.cx, pose.cy, pose.cz, pose.ax, pose.ay, pose.az);
 }
 
 function pointInCollider(x, y, z, pad) {
@@ -212,11 +234,30 @@ function frame(now) {
 
   // camera
   if (game.player.alive) {
+    specWasAlive = true;
+    specBlend = 1;
+    specTargetId = null;
     updatePlayerCamera();
     viewmodel.update(frameDt, game.playerCtrl.bobPhase, game.playerCtrl.moveAmount);
   } else {
     const target = game.spectateTarget();
-    if (target && target.alive) updateSpectateCamera(target, frameDt);
+    if (target && target.alive) {
+      // On death (or a teammate change) start the glide from the current
+      // camera pose; otherwise keep riding the chase camera.
+      if (specWasAlive || target.id !== specTargetId) {
+        const dir = new THREE.Vector3();
+        camera.getWorldDirection(dir);
+        specFrom = {
+          x: camera.position.x, y: camera.position.y, z: camera.position.z,
+          ax: camera.position.x + dir.x, ay: camera.position.y + dir.y, az: camera.position.z + dir.z,
+        };
+        specBlend = 0;
+        specWasAlive = false;
+        specTargetId = target.id;
+      }
+      specBlend = Math.min(1, specBlend + frameDt / 0.5);
+      updateSpectateCamera(target, specBlend, specFrom);
+    }
     else updatePlayerCamera(); // no one left to watch: stay at the body
   }
 

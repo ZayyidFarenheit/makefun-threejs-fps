@@ -57,8 +57,21 @@ export class Hud {
 
   showPause() { this.el['pause-screen'].hidden = false; }
   hidePause() { this.el['pause-screen'].hidden = true; }
-  showDeath() { this.el['death-screen'].hidden = false; }
-  hideDeath() { this.el['death-screen'].hidden = true; }
+  showDeath() {
+    const d = this.el['death-screen'];
+    clearTimeout(this._deathTimer);
+    d.hidden = false;
+    // Fade in instead of popping: start transparent, let the CSS
+    // transition carry it to full opacity.
+    d.style.opacity = '0';
+    requestAnimationFrame(() => { d.style.opacity = '1'; });
+  }
+  hideDeath() {
+    const d = this.el['death-screen'];
+    clearTimeout(this._deathTimer);
+    d.style.opacity = '0';
+    this._deathTimer = setTimeout(() => { d.hidden = true; }, 380);
+  }
   showEnd(title, sub) {
     this.el['end-title'].textContent = title;
     this.el['end-sub'].textContent = sub;
@@ -110,15 +123,18 @@ export class Hud {
     setTimeout(() => { o.style.opacity = '0'; }, 900);
   }
 
-  // Red vignette flash when the player takes a hit — impossible to miss.
+  // Red vignette flash when the player takes a hit — a smooth swell, not a
+  // hard pop: eased fade-in, then a slower eased fade-out. A fresh hit
+  // restarts the swell instead of fighting a pending fade-out.
   damageFlash() {
     const o = this.el['damage-vignette'];
-    o.style.transition = 'none';
+    clearTimeout(this._dmgTimer);
+    o.style.transition = 'opacity 150ms ease-out';
     o.style.opacity = '1';
-    requestAnimationFrame(() => {
-      o.style.transition = 'opacity 350ms linear';
+    this._dmgTimer = setTimeout(() => {
+      o.style.transition = 'opacity 400ms ease-in';
       o.style.opacity = '0';
-    });
+    }, 160);
   }
 
   hitmarker(head) {

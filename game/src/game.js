@@ -154,10 +154,13 @@ export class Game {
 
   skipBuyPhase() {
     if (this.phase !== 'buy') return;
+    const wasBuying = this.hud.buyOpen;
     this.phase = 'live';
     this.phaseTime = MATCH.roundSeconds;
     this.hud.closeBuy();
     this.hud.setHint('Hold E to plant / defuse · B — Buy menu (closed in live rounds)');
+    // The menu held the lock released; retake it now that the round is live.
+    if (wasBuying) this.input.tryRelock();
     this.sfx.buy();
   }
 
@@ -409,9 +412,21 @@ export class Game {
 
   // ---- buy menu ---------------------------------------------------------------
   toggleBuyMenu() {
-    if (this.hud.buyOpen) { this.hud.closeBuy(); return; }
+    if (this.hud.buyOpen) {
+      this.hud.closeBuy();
+      // Back to play: try to re-take the pointer lock. A soft attempt — if
+      // Chrome is still in its post-exit cooldown the click-to-relock path
+      // in Input takes over instead (that click never fires a shot).
+      this.input.tryRelock();
+      return;
+    }
     this.hud.openBuy(this.money, this.phase, this.player.ownedWeapons);
     if (this.phase !== 'buy') this.hud.setHint('Buying is closed — live round, view only');
+    // Pointer lock hides the cursor, so with the lock held the rows could
+    // never be clicked. Release the lock (guarded so the unlock does not
+    // pop the pause screen) and the cursor comes back for the buy menu.
+    this.input.armResumeGuard();
+    this.input.exitLock();
   }
 
   buyItem(kind, id) {
